@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>scraper-helper</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/eclipse.min.css">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: "Courier New", monospace;
+      font-size: 12px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background-color: #f9f9f9;
+      color: #333;
+      line-height: 1.5;
+    }
+    .page-layout {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      height: 100%;
+      overflow: hidden;
+    }
+    .header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem;
+      gap: 0.5rem;
+    }
+    .header form {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .header form label {
+      font-weight: bold;
+      color: #444;
+    }
+    input[type="text"] {
+      width: 300px;
+      font-size: 12px;
+      padding: 4px;
+      font-family: sans-serif;
+    }
+    button {
+      font-size: 12px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-family: "Courier New", monospace;
+    }
+    .error {
+      color: red;
+      margin-bottom: 0.5rem;
+    }
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.5rem;
+      width: 100%;
+      height: 100%;
+      padding: 0.5rem;
+      box-sizing: border-box;
+      overflow: hidden;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .content-grid::-webkit-scrollbar {
+      display: none;
+    }
+    .column {
+      display: flex;
+      flex-direction: column;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      height: 100%;
+      overflow: hidden;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .column::-webkit-scrollbar {
+      display: none;
+    }
+    .section-title {
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex: 1;
+    }
+    .alink {
+      color: #1e90ff;
+      text-decoration: none;
+      font-size: 11px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 200px;
+    }
+    .section-header {
+      padding: 0.3rem 0.5rem;
+      font-size: 11px;
+      background-color: #e6e6e6;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #ccc;
+      gap: 10px;
+    }
+    .heading-btn {
+      font-size: 10px;
+      cursor: pointer;
+      border: 1px solid #aaa;
+      border-radius: 2px;
+      background-color: #f8f8f8;
+      padding: 0 5px;
+      height: 16px;
+      line-height: 16px;
+    }
+    .column-content {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 0.5rem;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .column-content::-webkit-scrollbar {
+      display: none;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 5px;
+      text-align: left;
+      word-wrap: break-word;
+      white-space: normal;
+    }
+    th {
+      background-color: #333;
+      color: #fff;
+      font-weight: bold;
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+    td.selector {
+      font-weight: bold;
+      color: #007acc;
+    }
+    td.count {
+      color: #333;
+      font-weight: normal;
+    }
+    .visual {
+      font-size: 10px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      width: 100%;
+      max-height: 100%;
+      margin: 0 auto;
+      overflow-y: auto;
+    }
+    .node {
+      margin: 2px;
+      border: 1px solid;
+      font-size: 10px;
+      text-align: left;
+      font-family: "Courier New", monospace;
+    }
+    .node-header {
+      padding: 2px 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .node-children {
+      margin-left: 20px;
+      display: none;
+    }
+    .arrow {
+      display: inline-block;
+      width: 12px;
+    }
+    .expanded > .node-children {
+      display: block;
+    }
+    .node.div    { background-color: #e3f2fd; border-color: #64b5f6; }
+    .node.span   { background-color: #fce4ec; border-color: #f06292; }
+    .node.a      { background-color: #e8f5e9; border-color: #81c784; }
+    .node.table  { background-color: #fff3e0; border-color: #ffb74d; }
+    .node.thead  { background-color: #ffd54f; border-color: #ffa000; }
+    .node.tr     { background-color: #ffecb3; border-color: #fdd835; }
+    .node.td     { background-color: #ffe082; border-color: #f9a825; }
+    .node.script { background-color: #ffebee; border-color: #ef5350; }
+    .node.style  { background-color: #f3e5f5; border-color: #ab47bc; }
+    .node.other  { background-color: #f0f4c3; border-color: #cddc39; }
+    #jsonEditorContainer {
+      flex: 1 1 auto;
+      position: relative;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: #fff;
+      height: 100%;
+      overflow: hidden;
+    }
+    #jsonTextarea {
+      width: 100%;
+      height: 100%;
+    }
+    .CodeMirror {
+      height: 100% !important;
+      width: 100% !important;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    .copy-container {
+      position: relative;
+      display: inline-block;
+    }
+
+    .copy-success {
+      font-size: 10px;
+      color: #28a745;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-layout">
+    <div class="header">
+      <form action="/" method="POST">
+        <label for="urlInput">URL</label>
+        <input type="text" id="urlInput" name="url" placeholder="Enter a URL" value="<%= inputUrl %>" required />
+        <button type="submit">Scrape</button>
+      </form>
+      <% if (error) { %>
+        <div class="error"><%= error %></div>
+      <% } %>
+    </div>
+
+    <div class="content-grid">
+      <div class="column">
+        <div class="section-header">
+          <div class="section-title">
+            <span>CSS selectors for URL: </span>
+            <span class="sm-pad"><a href="<%= inputUrl %>" target="_blank" class="alink"><%= inputUrl %></a></span>
+          </div>
+        </div>
+        <div class="column-content">
+          <% if (domTree) { %>
+            <table>
+              <thead>
+                <tr>
+                  <th>Selector</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% 
+                  function flattenSelectors(treeObj, resultMap) {
+                    Object.keys(treeObj).forEach(k => {
+                      if (!resultMap[k]) resultMap[k] = 0;
+                      resultMap[k] += treeObj[k].count;
+                      flattenSelectors(treeObj[k].children, resultMap);
+                    });
+                  }
+                  let resultMap = {};
+                  flattenSelectors(domTree, resultMap);
+                  let sortedKeys = Object.keys(resultMap).sort((a,b) => resultMap[b] - resultMap[a]);
+                  for (const key of sortedKeys) {
+                %>
+                <tr>
+                  <td class="selector"><%= key %></td>
+                  <td class="count"><%= resultMap[key] %></td>
+                </tr>
+                <% } %>
+              </tbody>
+            </table>
+          <% } %>
+        </div>
+      </div>
+      <div class="column">
+        <div class="section-header">
+          <div class="section-title">Page Layout</div>
+          <button class="heading-btn" id="toggleButton">Expand</button>
+        </div>
+        <div class="column-content">
+          <% if (domTree) { %>
+            <div class="visual">
+              <% function renderVisual(tree) { %>
+                <% 
+                  let keys = Object.keys(tree).sort();
+                  for (const key of keys) {
+                    let node = tree[key];
+                    let tag = key.split('.')[0];
+                    let cssClass = ['div','span','a','table','thead','tr','td','script','style'].includes(tag)
+                      ? tag
+                      : 'other';
+                %>
+                <div class="node <%= cssClass %>">
+                  <div class="node-header" onclick="toggleNode(this)">
+                    <span class="arrow">▶</span>
+                    <span>
+                      <strong style="font-family:'Courier New', monospace;"><%= key %></strong>
+                      <span style="font-weight:normal;">x <%= node.count %></span>
+                    </span>
+                  </div>
+                  <% if (Object.keys(node.children).length > 0) { %>
+                  <div class="node-children">
+                    <%= renderVisual(node.children) %>
+                  </div>
+                  <% } %>
+                </div>
+                <% } %>
+              <% } %>
+              <%= renderVisual(domTree) %>
+            </div>
+          <% } %>
+        </div>
+      </div>
+      <div class="column">
+        <div class="section-header">
+          <div class="section-title">JSON View</div>
+          <div class="copy-container">
+            <button class="heading-btn" id="copyButton">Copy</button>
+            <span id="copySuccess" class="copy-success" style="display: none;">Success!</span>
+          </div>
+        </div>
+        <div class="column-content" style="display: flex; flex-direction: column;">
+          <% if (domTree) { %>
+            <div id="jsonEditorContainer">
+              <textarea id="jsonTextarea"></textarea>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
+  <script>
+    let codeMirrorInstance = null;
+
+    function loadJson() {
+      fetch('/export-json')
+        .then(res => res.json())
+        .then(data => {
+          if (!codeMirrorInstance) {
+            codeMirrorInstance = CodeMirror.fromTextArea(document.getElementById('jsonTextarea'), {
+              lineNumbers: true,
+              mode: 'application/json',
+              readOnly: true,
+              theme: 'eclipse',
+              lineWrapping: true,
+              viewportMargin: Infinity,
+              height: "100%",
+              width: "100%"
+            });
+          }
+          codeMirrorInstance.setValue(JSON.stringify(data, null, 2));
+          codeMirrorInstance.refresh(); 
+        })
+        .catch(err => console.error('Error fetching JSON:', err));
+    }
+
+    function copyJson() {
+      if (!codeMirrorInstance) return;
+      
+      const copyButton = document.getElementById('copyButton');
+      const successText = document.getElementById('copySuccess');
+      const jsonContent = codeMirrorInstance.getValue();
+      
+      navigator.clipboard.writeText(jsonContent)
+        .then(() => {
+          copyButton.style.display = 'none';
+          successText.style.display = 'inline';
+          
+          setTimeout(() => {
+            successText.style.display = 'none';
+            copyButton.style.display = 'inline';
+          }, 3000);
+        })
+        .catch(err => console.error('Failed to copy JSON:', err));
+    }
+
+    function toggleNode(el) {
+      const parent = el.parentNode;
+      const arrow = el.querySelector('.arrow');
+      parent.classList.toggle('expanded');
+      arrow.textContent = (arrow.textContent === '▶') ? '▼' : '▶';
+    }
+
+    function toggleAllNodes() {
+      const toggleButton = document.getElementById('toggleButton');
+      const nodes = document.querySelectorAll('.node');
+      const isExpanding = toggleButton.textContent === 'Expand';
+      
+      nodes.forEach(node => {
+        if (isExpanding) {
+          node.classList.add('expanded');
+          const arrow = node.querySelector('.arrow');
+          if (arrow && arrow.textContent === '▶') {
+            arrow.textContent = '▼';
+          }
+        } else {
+          node.classList.remove('expanded');
+          const arrow = node.querySelector('.arrow');
+          if (arrow && arrow.textContent === '▼') {
+            arrow.textContent = '▶';
+          }
+        }
+      });
+      
+      toggleButton.textContent = isExpanding ? 'Collapse' : 'Expand';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      <% if (domTree) { %> loadJson(); <% } %>
+      
+      const toggleButton = document.getElementById('toggleButton');
+      toggleButton.addEventListener('click', toggleAllNodes);
+      
+      const copyButton = document.getElementById('copyButton');
+      copyButton.addEventListener('click', copyJson);
+      
+      const nodeHeaders = document.querySelectorAll('.node-header');
+      nodeHeaders.forEach(header => {
+        header.addEventListener('click', function() {
+          toggleNode(this);
+        });
+      });
+    });
+  </script>
+</body>
+</html>
