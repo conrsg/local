@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Responsive Grid Color Tool</title>
+  <style>
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    @font-face {
+      font-family: 'JetBrainsMono';
+      src: url('JetBrainsMono-Regular.woff2') format('woff2');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    html {
+      font-family: 'JetBrainsMono', monospace, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      font-size: 12px;
+      overflow: hidden;
+      font-family: 'JetBrainsMono', monospace;
+    }
+
+    #grid {
+      display: grid;
+      width: 100vw;
+      height: 100vh;
+      background-color: #f0f0f0;
+    }
+
+    .grid-item {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    .grid-item:hover {
+      opacity: 97%;
+    }
+
+    .grid-text {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      color: #fff;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+      font-size: 10px;
+      padding: 3px;
+      border-radius: 3px;
+      background-color: rgba(0, 0, 0, 0.2);
+    }
+
+    .grid-item[data-color^="#1f"] .grid-text,
+    .grid-item[data-color^="#ff"] .grid-text,
+    .grid-item[data-color^="#ddd"] .grid-text,
+    .grid-item[data-color^="#f8f"] .grid-text,
+    .grid-item[data-color^="#fff"] .grid-text,
+    .grid-item[data-color^="#d8d"] .grid-text,
+    .grid-item[data-color^="#ded"] .grid-text {
+      color: #000;
+      text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.8);
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .grid-heart {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      display: none;
+    }
+
+    .grid-heart.animate svg {
+      transform: scale(.8);
+      transition: transform 0.15s ease-in-out;
+    }
+
+    .grid-heart.animate svg:hover {
+      transform: scale(1.2);
+    }
+
+    .grid-heart.active svg {
+      fill: rgb(192, 42, 42);
+      width: 18px;
+      height: 18px;
+    }
+
+    .grid-heart.active svg:hover {
+      fill: rgb(192, 42, 42);
+      width: 20px;
+      height: 20px;
+      transition: transform 0.15s ease-in;
+    }
+
+    .grid-heart:not(.active) svg {
+      fill: rgba(255, 255, 255, 0.873);
+      stroke: rgba(0, 0, 0, 0.2);
+      text-shadow: 1px 1px 3px rgba(15, 15, 15, 0.8);
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10;
+      stroke-width: 1px;
+    }
+
+    .grid-heart:not(.active) svg:hover {
+      fill: rgb(192, 42, 42);
+    }
+
+    #action-bar .action-item:first-child.active {
+      background-color: rgba(0, 0, 0, 0.2);
+    }
+
+    .grid-heart.active svg {
+      fill: rgb(192, 42, 42);
+    }
+
+    .grid-heart.active svg:hover {
+      fill: rgb(192, 42, 42);
+    }
+
+    .grid-heart.active {
+      display: block;
+      fill: rgb(192, 42, 42);
+    }
+
+    .grid-heart svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    #action-bar {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 180px;
+      height: 36px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      background-color: rgba(240, 240, 240, 0.9);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      z-index: 10;
+      border-radius: 6px;
+      overflow: hidden;
+      backdrop-filter: blur(5px);
+    }
+
+    #action-bar .action-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      border-right: 1px solid rgba(204, 204, 204, 0.5);
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      padding: 8px;
+    }
+
+    #action-bar .action-item:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    #action-bar .action-item:active {
+      background-color: rgba(0, 0, 0, 0.1);
+    }
+
+    #action-bar .action-item:first-child {
+      border-top-left-radius: 6px;
+      border-bottom-left-radius: 6px;
+    }
+
+    #action-bar .action-item:last-child {
+      border-right: none;
+      border-top-right-radius: 6px;
+      border-bottom-right-radius: 6px;
+    }
+
+    #action-bar .action-item svg {
+      width: 14px;
+      height: 14px;
+      opacity: 0.8;
+    }
+
+    #action-bar .action-item:hover svg {
+      opacity: 1;
+    }
+
+    #block-panel {
+      position: absolute;
+      top: 50px;
+      right: 10px;
+      width: 200px;
+      background-color: rgba(250, 250, 250, 0.95);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+      font-size: 12px;
+      border-radius: 6px;
+      overflow: hidden;
+      backdrop-filter: blur(5px);
+      z-index: 9;
+    }
+
+    #block-panel .panel-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-bottom: 1px solid rgba(224, 224, 224, 0.5);
+    }
+
+    #block-panel .panel-row:last-child {
+      border-bottom: none;
+    }
+
+    #block-panel .panel-title {
+      font-weight: bold;
+      background-color: rgba(240, 240, 240, 0.5);
+      margin-bottom: 0;
+      padding: 10px 12px;
+    }
+
+    #block-panel input[type="checkbox"] {
+      transform: scale(0.9);
+      cursor: pointer;
+    }
+
+    #block-panel .reset-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background-color: #f0f0f0;
+      cursor: pointer;
+      margin-left: 10px;
+      transition: background-color 0.2s ease;
+    }
+
+    #block-panel .reset-button:hover {
+      background-color: #e0e0e0;
+    }
+
+    #block-panel .reset-button svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    @media (max-width: 768px) {
+      #action-bar {
+        width: 160px;
+        height: 32px;
+      }
+
+      #action-bar .action-item svg {
+        width: 12px;
+        height: 12px;
+      }
+
+      #block-panel {
+        width: 180px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="grid"></div>
+  <div id="action-bar"></div>
+  <script>
+    const prevPageIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path d="M8.707 11.293L6.414 9H13a1 1 0 1 0 0-2H6.414l2.293-2.293a1 1 0 0 0-1.414-1.414l-4 4a1 1 0 0 0 0 1.414l4 4a1 1 0 0 0 1.414-1.414z"></path></svg>`;
+    const nextPageIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path d="M7.293 4.707L9.586 7H3a1 1 0 1 0 0 2h6.586l-2.293 2.293a1 1 0 0 0 1.414 1.414l4-4a1 1 0 0 0 0-1.414l-4-4a1 1 0 0 0-1.414 1.414z"></path></svg>`;
+
+    let layoutPatterns = [30, 20, 12, 6];
+    let layoutIndex = 0;
+    let blockCount = layoutPatterns[layoutIndex];
+    let grid = document.getElementById("grid");
+    let favorite_arr = JSON.parse(localStorage.getItem("favorite_arr") || "[]");
+    let heartsActive = true, useAlternatePool = false, useFavoritesPool = false;
+    let initialColors = ["#ECEFF1", "#CFD8DC", "#B0BEC5", "#90A4AE", "#78909C", "#607D8B", "#546E7A", "#455A64", "#37474F", "#F5F5F5", "#EEEEEE", "#E0E0E0", "#BDBDBD", "#9E9E9E", "#757575", "#616161", "#424242", "#212121", "#FFECB3", "#FFE082", "#FFD54F", "#FFCA28", "#FFC107", "#FFB300", "#E1BEE7", "#CE93D8", "#BA68C8", "#AB47BC", "#9C27B0", "#F0F4C3"];
+    let alternatePool = ["#8b0820", "#0757ba", "#075fc8", "#92caff", "#0864d1", "#c21c2c", "#1b7c83", "#3192aa", "#0860ca", "#d1242f", "#caecff", "#c8d1da", "#dae0e7", "#0969da", "#ddf4ff", "#9a6700", "#fff8c5", "#cf222e", "#ffebe9", "#eff2f5", "#8250df", "#fbefff", "#25292e", "#f6f8fa", "#59636e", "#818b981f", "#bf3989", "#ffeff7", "#ffffff00", "#54aeff66", "#d4a72c66", "#d1d9e0", "#818b981a", "#c297ff66", "#818b98", "#ff818266", "#ff80c866", "#a40e26", "#d1242f80", "#4c001433", "#e6eaef", "#00215533", "#0021554d", "#eac54f", "#002d1133", "#0550ae", "#0a3069", "#393f46", "#218bff", "#0550ae", "#a475f9", "#4d2d00", "#633c01", "#82071e", "#54aeff", "#6639ba", "#ffcecb", "#82071e", "#0a3069", "#3b2300", "#ffffff", "#1f2328", "#54aeff66", "#ffffffcc", "#cf222e0d", "#ffffff33", "#cf222e1a", "#0969da0d", "#0969da1a", "#1f2328", "#0969da33", "#1f23280a", "#1f23281a", "#d1d9e080", "#25292e0a", "#25292e1f", "#25292e3d", "#25292e14", "#25292e52"];
+    const filledHeartIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="12" height="12"><path d="M7.655 14.916v-.001h-.002l-.006-.003-.018-.01a22.066 22.066 0 0 1-3.744-2.584C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.044 5.231-3.886 6.818a22.094 22.094 0 0 1-3.433 2.414 7.152 7.152 0 0 1-.31.17l-.018.01-.008.004a.75.75 0 0 1-.69 0Z"></path></svg>`;
+    const unfilledHeartIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="12" height="12"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002ZM4.25 2.5c-1.336 0-2.75 1.164-2.75 3 0 2.15 1.58 4.144 3.365 5.682A20.58 20.58 0 0 0 8 13.393a20.58 20.58 0 0 0 3.135-2.211C12.92 9.644 14.5 7.65 14.5 5.5c0-1.836-1.414-3-2.75-3-1.373 0-2.609.986-3.029 2.456a.749.749 0 0 1-1.442 0C6.859 3.486 5.623 2.5 4.25 2.5Z"></path></svg>`;
+
+    let favoritesPage = 0;
+
+    function toggleHeartState(heart, div) {
+      heart.classList.add("animate");
+      setTimeout(() => { heart.classList.remove("animate"); }, 150);
+      if (heart.classList.contains("active")) {
+        heart.classList.remove("active");
+        heart.innerHTML = unfilledHeartIcon;
+        let idx = favorite_arr.indexOf(div.dataset.color);
+        if (idx > -1) { favorite_arr.splice(idx, 1); }
+        heart.style.display = "none";
+
+        // Remove from grid if in favorites view
+        if (useFavoritesPool) {
+          div.remove();
+          resizeGrid();
+        }
+      } else {
+        heart.classList.add("active");
+        heart.innerHTML = filledHeartIcon;
+        if (div.dataset.color !== "" && favorite_arr.indexOf(div.dataset.color) === -1) { favorite_arr.push(div.dataset.color); }
+        heart.style.display = "block";
+      }
+      localStorage.setItem("favorite_arr", JSON.stringify(favorite_arr));
+    }
+
+    function createGrid() {
+      grid.innerHTML = "";
+      let colors = [];
+      if (useFavoritesPool) {
+        let startIndex = favoritesPage * blockCount;
+        let availableColors = favorite_arr.slice(startIndex, startIndex + blockCount);
+        colors = availableColors;
+      } else if (useAlternatePool) {
+        colors = generateAlternatePoolColors();
+      } else {
+        colors = initialColors.slice(0, blockCount);
+      }
+      colors.forEach(color => {
+        let div = document.createElement("div");
+        div.className = "grid-item";
+        div.dataset.color = color;
+        div.style.backgroundColor = color;
+        let span = document.createElement("span");
+        span.className = "grid-text";
+        span.textContent = color;
+        let heart = document.createElement("div");
+        heart.className = "grid-heart";
+        heart.style.display = (color !== "" && favorite_arr.indexOf(color) > -1) ? "block" : "none";
+        if (color !== "" && favorite_arr.indexOf(color) > -1) {
+          heart.classList.add("active");
+          heart.innerHTML = filledHeartIcon;
+        } else {
+          heart.innerHTML = unfilledHeartIcon;
+        }
+        heart.addEventListener("click", e => {
+          e.stopPropagation();
+          toggleHeartState(heart, div);
+        });
+
+        div.addEventListener("click", () => {
+          if (div.dataset.color !== "") {
+            // Toggle heart when clicking on the div
+            if (!heart.classList.contains("active")) {
+              toggleHeartState(heart, div);
+            } else {
+              toggleHeartState(heart, div);
+            }
+          }
+        });
+
+        // Add special event listener for the text span
+        span.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (div.dataset.color !== "") {
+            navigator.clipboard.writeText(div.dataset.color);
+            let temp = span.textContent;
+            span.textContent = "Copied";
+            setTimeout(() => { span.textContent = div.dataset.color; }, 1500);
+          }
+        });
+
+        div.addEventListener("mouseenter", () => {
+          document.querySelectorAll(".grid-heart").forEach(h => { if (!h.classList.contains("active")) { h.style.display = "none"; } });
+          if (!heart.classList.contains("active")) { heart.style.display = "block"; heart.innerHTML = unfilledHeartIcon; }
+        });
+        div.addEventListener("mouseleave", () => { if (!heart.classList.contains("active")) { heart.style.display = "none"; } });
+        div.appendChild(span);
+        div.appendChild(heart);
+        grid.appendChild(div);
+      });
+    }
+    let shuffledAltPool = [], altPoolIndex = 0;
+    function shuffleArray(arr) { for (let i = arr.length - 1; i > 0; i--) { let j = Math.floor(Math.random() * (i + 1));[arr[i], arr[j]] = [arr[j], arr[i]] } return arr }
+    function randomWebSafeColor() { const vals = [0, 51, 102, 153, 204, 255], alphas = [0.5, 0.6, 0.7, 0.8, 0.9, 1]; let r = vals[Math.floor(Math.random() * vals.length)], g = vals[Math.floor(Math.random() * vals.length)], b = vals[Math.floor(Math.random() * vals.length)], a = alphas[Math.floor(Math.random() * alphas.length)]; let rHex = r.toString(16).padStart(2, "0").toUpperCase(), gHex = g.toString(16).padStart(2, "0").toUpperCase(), bHex = b.toString(16).padStart(2, "0").toUpperCase(), aHex = Math.round(a * 255).toString(16).padStart(2, "0").toUpperCase(); return "#" + rHex + gHex + bHex + aHex }
+    function generateRandomColors() { let set = new Set(); while (set.size < blockCount) { set.add(randomWebSafeColor()) } return Array.from(set) }
+    function generateAlternatePoolColors() { if (shuffledAltPool.length === 0 || altPoolIndex + blockCount > shuffledAltPool.length) { shuffledAltPool = shuffleArray([...alternatePool]); altPoolIndex = 0 } let result = shuffledAltPool.slice(altPoolIndex, altPoolIndex + blockCount); altPoolIndex += blockCount; return result }
+
+    function resizeGrid() {
+      if (useFavoritesPool) {
+        let startIndex = favoritesPage * blockCount;
+        let availableColors = favorite_arr.slice(startIndex, startIndex + blockCount);
+        let count = availableColors.length;
+        let cols = Math.ceil(Math.sqrt(count)), rows = Math.ceil(count / cols);
+        grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+        grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+      } else {
+        let cols = Math.ceil(Math.sqrt(blockCount)), rows = Math.ceil(blockCount / cols);
+        grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+        grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+      }
+    }
+    window.addEventListener("resize", () => { resizeGrid(); });
+    function updateGridColors() {
+      let newColors = [];
+      if (useFavoritesPool) {
+        let startIndex = favoritesPage * blockCount;
+        newColors = favorite_arr.slice(startIndex, startIndex + blockCount);
+      } else if (useAlternatePool) {
+        newColors = generateAlternatePoolColors();
+      } else {
+        newColors = generateRandomColors();
+      }
+
+      // Clear existing grid
+      grid.innerHTML = "";
+
+      // Create only necessary blocks
+      newColors.forEach(color => {
+        let div = document.createElement("div");
+        div.className = "grid-item";
+        div.dataset.color = color;
+        div.style.backgroundColor = color;
+        let span = document.createElement("span");
+        span.className = "grid-text";
+        span.textContent = color;
+        let heart = document.createElement("div");
+        heart.className = "grid-heart";
+        heart.style.display = (color !== "" && favorite_arr.indexOf(color) > -1) ? "block" : "none";
+        if (color !== "" && favorite_arr.indexOf(color) > -1) {
+          heart.classList.add("active");
+          heart.innerHTML = filledHeartIcon;
+        } else {
+          heart.innerHTML = unfilledHeartIcon;
+        }
+        heart.addEventListener("click", e => {
+          e.stopPropagation();
+          toggleHeartState(heart, div);
+        });
+
+        div.addEventListener("click", () => {
+          if (div.dataset.color !== "") {
+            // Toggle heart when clicking on the div
+            if (!heart.classList.contains("active")) {
+              toggleHeartState(heart, div);
+            } else {
+              toggleHeartState(heart, div);
+            }
+          }
+        });
+
+        // Add special event listener for the text span
+        span.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (div.dataset.color !== "") {
+            navigator.clipboard.writeText(div.dataset.color);
+            let temp = span.textContent;
+            span.textContent = "Copied";
+            setTimeout(() => { span.textContent = div.dataset.color; }, 1500);
+          }
+        });
+
+        div.addEventListener("mouseenter", () => {
+          document.querySelectorAll(".grid-heart").forEach(h => { if (!h.classList.contains("active")) { h.style.display = "none"; } });
+          if (!heart.classList.contains("active")) { heart.style.display = "block"; heart.innerHTML = unfilledHeartIcon; }
+        });
+        div.addEventListener("mouseleave", () => { if (!heart.classList.contains("active")) { heart.style.display = "none"; } });
+        div.appendChild(span);
+        div.appendChild(heart);
+        grid.appendChild(div);
+      });
+
+      resizeGrid();
+    }
+    const refreshIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path d="M1.705 8.005a.75.75 0 0 1 .834.656 5.5 5.5 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.002 7.002 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834ZM8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.002 7.002 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.5 5.5 0 0 0 8 2.5Z"></path></svg>`;
+    const blockPanelIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path d="M16 10.75v2.5A1.75 1.75 0 0 1 14.25 15H1.75A1.75 1.75 0 0 1 0 13.25v-2.5C0 9.784.784 9 1.75 9h12.5c.966 0 1.75.784 1.75 1.75Zm0-8v2.5A1.75 1.75 0 0 1 14.25 7H1.75A1.75 1.75 0 0 1 0 5.25v-2.5C0 1.784.784 1 1.75 1h12.5c.966 0 1.75.784 1.75 1.75Zm-1.75-.25H1.75a.25.25 0 0 0-.25.25v2.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25v-2.5a.25.25 0 0 0-.25-.25Zm0 8H1.75a.25.25 0 0 0-.25.25v2.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25v-2.5a.25.25 0 0 0-.25-.25Z"></path></svg>`;
+    const layoutIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v12.5A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25ZM6.5 6.5v8h7.75a.25.25 0 0 0 .25-.25V6.5Zm8-1.5V1.75a.25.25 0 0 0-.25-.25H6.5V5Zm-13 1.5v7.75c0 .138.112.25.25.25H5v-8ZM5 5V1.5H1.75a.25.25 0 0 0-.25.25V5Z"></path></svg>`;
+    const githubIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path></svg>`;
+    const actions = [
+      {
+        icon: refreshIcon, action: () => {
+          if (useFavoritesPool) {
+            // Refresh with favorites
+            createGrid();
+            resizeGrid();
+          } else {
+            updateGridColors();
+          }
+        }
+      },
+      { icon: blockPanelIcon, action: () => { toggleBlockPanel(); } },
+      { icon: layoutIcon, action: () => { layoutIndex = (layoutIndex + 1) % layoutPatterns.length; blockCount = layoutPatterns[layoutIndex]; createGrid(); resizeGrid(); } },
+      { icon: githubIcon, action: () => { window.open("https://www.github.com/drummacon", "_blank"); } }
+    ];
+    function createActionBar() {
+      let bar = document.getElementById("action-bar");
+      bar.innerHTML = "";
+      bar.style.gridTemplateColumns = `repeat(${actions.length},1fr)`;
+      actions.forEach(item => {
+        let div = document.createElement("div");
+        div.className = "action-item";
+        div.innerHTML = item.icon;
+        div.addEventListener("click", item.action);
+        bar.appendChild(div);
+      });
+    }
+    createActionBar();
+    let blockPanelVisible = false;
+    function toggleBlockPanel() {
+      let panel = document.getElementById("block-panel");
+      if (panel) { panel.remove(); blockPanelVisible = false; return; }
+      panel = document.createElement("div");
+      panel.id = "block-panel";
+      panel.style.position = "absolute";
+      panel.style.top = "50px";
+      panel.style.right = "10px";
+      panel.style.width = "200px";
+      panel.style.backgroundColor = "#fafafa";
+      panel.style.boxShadow = "0 2px 4px rgba(0,0,0,0.2)";
+      panel.style.fontSize = "12px";
+      panel.style.borderRadius = "6px";
+      panel.style.overflow = "hidden";
+      panel.innerHTML = `
+    <div class="panel-row panel-title">Themes</div>
+    <div class="panel-row">
+      <span>GitHub</span>
+      <input type="checkbox" id="githubToggle">
+    </div>
+    <div class="panel-row panel-title">Other</div>
+    <div class="panel-row">
+      <span>Favorites</span>
+      <input type="checkbox" id="favoritesToggle">
+      <div class="reset-button" id="prevPageButton">${prevPageIcon}</div>
+      <div class="reset-button" id="nextPageButton">${nextPageIcon}</div>
+      <div class="reset-button" id="resetFavorites">${`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path d="M6.5 1.75V3h3V1.75a.25.25 0 0 0-.25-.25h-2.5a.25.25 0 0 0-.25.25Z"></path><path d="M4.496 6.675l.66 6.6a.25.25 0 0 0 .249.225h5.19a.25.25 0 0 0 .249-.225l.66-6.6a.75.75 0 0 1 1.492.149l-.66 6.6A1.748 1.748 0 0 1 10.595 15h-5.19a1.75 1.75 0 0 1-1.741-1.575l-.66-6.6a.75.75 0 1 1 1.492-.15Z"></path></svg>`}</div>
+    </div>
+  `;
+      document.body.appendChild(panel);
+      document.getElementById("githubToggle").checked = useAlternatePool;
+      document.getElementById("favoritesToggle").checked = useFavoritesPool;
+      document.getElementById("githubToggle").addEventListener("change", e => {
+        useAlternatePool = e.target.checked;
+        if (useAlternatePool) { useFavoritesPool = false; document.getElementById("favoritesToggle").checked = false; }
+        favoritesPage = 0;
+        updateGridColors();
+        createGrid();
+      });
+      document.getElementById("favoritesToggle").addEventListener("change", e => {
+        useFavoritesPool = e.target.checked;
+        if (useFavoritesPool) { useAlternatePool = false; document.getElementById("githubToggle").checked = false; }
+        favoritesPage = 0;
+        updateGridColors();
+        createGrid();
+      });
+      document.getElementById("resetFavorites").addEventListener("click", () => {
+        favorite_arr = [];
+        localStorage.setItem("favorite_arr", JSON.stringify(favorite_arr));
+        document.querySelectorAll(".grid-heart").forEach(h => { h.classList.remove("active"); h.innerHTML = unfilledHeartIcon; h.style.display = "none"; });
+        if (useFavoritesPool) {
+          grid.innerHTML = "";
+          resizeGrid();
+        }
+      });
+      document.getElementById("prevPageButton").addEventListener("click", () => {
+        if (favoritesPage > 0) { favoritesPage--; createGrid(); }
+      });
+      document.getElementById("nextPageButton").addEventListener("click", () => {
+        if ((favoritesPage + 1) * blockCount < favorite_arr.length) { favoritesPage++; createGrid(); }
+      });
+      blockPanelVisible = true;
+    }
+    createGrid();
+    resizeGrid();
+  </script>
+</body>
+
+</html>
